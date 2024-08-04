@@ -3,6 +3,10 @@
 from threading import Thread
 from time import sleep
 
+import configparser#файла конфигурации
+
+
+
 
 
 #from MathZrenieProect.OpenCVOtladka.OpenCVOtladka import OpenCVOtladka
@@ -12,7 +16,8 @@ sostoanie_TkinterGUI = {'output': False,
                         'ramka_osX': 0,
                         'ramka_osY': 0,
                         'pramiygolnik_PoX': 20,
-                        'pramiygolnik_PoY': 20}
+                        'pramiygolnik_PoY': 20,
+                        'ObnovitConfig': False}
 '''СЛОВАРЬ
 gender_dict = {0: 'муж',
                1: 'жен'}
@@ -36,13 +41,33 @@ def TkinterGUI():
     from time import sleep
 
     global sostoanie_TkinterGUI
-    
+    global config
 
+
+    a=1#номер прямоугольника
     #событие на кнопу
     def button_click_def(event):
         print("Нажата кнопка output")
         sostoanie_TkinterGUI.update( {'output': True } )
         window.destroy()
+    #событие на кнопу записи координат прямоугольника
+    def button_SaveKoordPriamoygoln(event):
+        print("Нажата кнопка сохранения координат")
+        a= 1 + len(config.options('KoordinatPriamoygolnik'))
+        #массив координат прямоугольника
+        array=[sostoanie_TkinterGUI['ramka_osX'],
+               sostoanie_TkinterGUI['ramka_osY'],
+               sostoanie_TkinterGUI['pramiygolnik_PoX'],
+               sostoanie_TkinterGUI['pramiygolnik_PoY'],]
+        aSTR=str(a)#преобразуем в строку так как конфиг принимает только строки
+        arraySTR=str(array)#преобразуем в строку так как конфиг принимает только строки
+        config.set('KoordinatPriamoygolnik', aSTR, arraySTR)#записываем данные в конфиг
+        #записываем в файл конфиг
+        with open('config.ini', 'w') as config_file:
+            config.write(config_file)
+        #ставим флаг что надо перечитать конфиг
+        sostoanie_TkinterGUI.update( {'ObnovitConfig': True } )
+
 
     #события на ползунок
     def scale_osX_value(osX_value):
@@ -65,7 +90,7 @@ def TkinterGUI():
     window.title("Добро пожаловать в приложение PythonRu")
     window.geometry('250x600')
    
-    #создаем кнопку
+    #создаем кнопку выход
     button_output = tk.Button(
         text="output",
         width=15,
@@ -75,6 +100,17 @@ def TkinterGUI():
         )
     button_output.place(x = 125, y = 565)#расположение кнопки   
     button_output.bind("<Button-1>", button_click_def)#объявляем событие
+
+    #создаем кнопку сохранить координаты прямоугольника
+    button_output = tk.Button(
+        text="СохрКоордПрямоуг",
+        width=15,
+        height=1,
+        #bg="blue",
+        #fg="yellow",
+        )
+    button_output.place(x = 1, y = 365)#расположение кнопки   
+    button_output.bind("<Button-1>", button_SaveKoordPriamoygoln)#объявляем событие
 
     #ползунок по расположению на Х
     scale_osX = tk.Scale(window,
@@ -150,6 +186,36 @@ def OpenCVOtladka():
                                 (255,0,255), 2)
         #
         
+        #
+        #for KoordinatPriamoygolnik in len(config.options('KoordinatPriamoygolnik')): #возвращает список опций, доступных в указанной секции section
+        for KoordinatPriamoygolnikNo in config.options('KoordinatPriamoygolnik'): # если добавили прямоугольник то
+            if sostoanie_TkinterGUI.get( 'ObnovitConfig' ):
+                # Чтение файла конфигурации
+                config.read('config.ini')
+
+            array=[]#создаем массив
+ 
+            a = config.get('KoordinatPriamoygolnik', KoordinatPriamoygolnikNo).replace('\'', '')# .replace удаление всех символов, в данном случае '
+            #вытаскиваем из конфига значения и преобразовываем его в массив
+            s0 = a.find(',', 0)#ищем в строке запятую
+            array.append(int(a[ 1 : s0 ]))#по найденому индексу срезаем нужное значение
+            
+            s1 = a.find(',', s0+1)
+            array.append(int(a[ s0+1 : s1 ]))
+
+            s2 = a.find(',', s1+1)
+            array.append(int(a[ s1+1 : s2 ]))
+
+            s3 = a.find(',', s2+1)
+            array.append(int(a[ s2+1 : s3 ]))
+            print(array)
+
+            cv2.rectangle(img, (array[0], array[1]), (array[0]+array[2], array[1]+array[3]), (0,0,255), 2)
+
+
+
+
+
         cv2.imshow("result", img) 
 
         ch = cv2.waitKey(5)
@@ -160,10 +226,6 @@ def OpenCVOtladka():
     cv2.destroyAllWindows()
         
     #print(sostoanie_TkinterGUI)
-
-
-
-
 
 
 
@@ -187,6 +249,22 @@ def main():
 
 
 
+#---------работаем с файлом конфигурации------
+config = configparser.ConfigParser()
+# Чтение файла конфигурации
+config.read('config.ini')
+# Создание конфигурации
+try:
+    config.add_section('KoordinatPriamoygolnik')
+except:
+    print('Конфигурация уже есть')
+# Сохранение конфигурации в файл
+with open('config.ini', 'w') as config_file:
+    config.write(config_file)
+#-----конец работаем с файлом конфигурации----
+
+        
+print(config.sections())
 
 if __name__ == '__main__':
     main()
