@@ -38,6 +38,7 @@ story_count = {'сто': 100,
 #------------------------------------------------------------------------
 def TkinterGUI():
     import tkinter as tk
+    from tkinter import ttk
     from time import sleep
 
     global sostoanie_TkinterGUI
@@ -69,6 +70,8 @@ def TkinterGUI():
         sostoanie_TkinterGUI.update( {'ObnovitConfig': True } )
 
 
+
+
     #события на ползунок
     def scale_osX_value(osX_value):
         lbl_1.config(text= osX_value )
@@ -82,6 +85,17 @@ def TkinterGUI():
         sostoanie_TkinterGUI.update( {'pramiygolnik_PoX': pramiygolnikPoX_value } )
     def scale_pramiygolnikPoY_value(pramiygolnikPoX_value):
         sostoanie_TkinterGUI.update( {'pramiygolnik_PoY': pramiygolnikPoX_value } )
+
+    #события на нажатие всплывающий список, обновляем всплывающий список
+    def combobox1_ObnovlenieSpiska(event):
+        config.read('config.ini')
+        li = [' ']
+        li.extend( config.options('KoordinatPriamoygolnik') )#к пустому списку добавляем опции из файла конфигурации
+        combobox1.configure(values = li  )
+    #события на выбор из списка
+    def combobox1_ViborElementaSpiska(event):        
+        #combobox.get()#Выбранный элемент можно получить с помощью метода get()
+        lbl_1.config(text= combobox1.get() )
 
 
 
@@ -109,7 +123,7 @@ def TkinterGUI():
         #bg="blue",
         #fg="yellow",
         )
-    button_output.place(x = 1, y = 365)#расположение кнопки   
+    button_output.place(x = 1, y = 250)#расположение кнопки   
     button_output.bind("<Button-1>", button_SaveKoordPriamoygoln)#объявляем событие
 
     #ползунок по расположению на Х
@@ -145,6 +159,14 @@ def TkinterGUI():
                       orient = "vertical",
                       command=scale_pramiygolnikPoY_value)
     scale_pramiygolnikPoY.place(x = 200, y = 40)#расположение
+
+    # Combobox выпадающий список, пользователь может выбрать один элемент
+    combobox1 = ttk.Combobox( values = [' '])
+    combobox1.current(0)#Для установки по индексу из привязанного набора значений
+    combobox1.pack(anchor='nw', padx=6, pady=285)#расположение
+    combobox1.bind("<ButtonPress-1>", combobox1_ObnovlenieSpiska)#событие на нажатие на фиджет
+    combobox1.bind("<<ComboboxSelected>>", combobox1_ViborElementaSpiska)#обработки выбора элементов в Combobox
+
 
     
     lbl_1 = tk.Label(window, text = 0)#простой текст
@@ -208,7 +230,7 @@ def OpenCVOtladka():
 
             s3 = a.find(',', s2+1)
             array.append(int(a[ s2+1 : s3 ]))
-            print(array)
+            #print(array)
 
             cv2.rectangle(img, (array[0], array[1]), (array[0]+array[2], array[1]+array[3]), (0,0,255), 2)
 
